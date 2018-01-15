@@ -120,7 +120,7 @@ env:
     - TESTS_LOC_DIR=$SHIPPABLE_REPO_DIR/tests
     - RES_IMG="ecr_img_app"
     - MOD_LOC=$SHIPPABLE_REPO_DIR/node_modules/.bin/
-    - DOCKER_REPO="demo_app"
+    - DOCKER_REPO="app"
     - DOCKER_ACC="679404489841.dkr.ecr.us-east-1.amazonaws.com" # replace with your ECR URL
 
 build:
