@@ -1,0 +1,174 @@
+resources:
+
+#---------------------------------------------------------------#
+#------------------------------ Dev ----------------------------#
+#---------------------------------------------------------------#
+
+# Set app version seed
+  - name: version_demo_app
+    type: version
+    versionTemplate:
+      versionName: "1.1.0"
+
+# Docker Image
+  - name: ecr_img_demo_app
+    type: image
+    integration: demo_aws # replace with your Amazon ECR integration name
+    versionTemplate:
+      sourceName: "679404489841.dkr.ecr.us-east-1.amazonaws.com/e2eshippabledemo" # replace with your Amazon ECR URL
+      isPull: false
+      versionName: master.1
+
+# TEST Docker Image Options
+  - name: test_img_opts_ecr_img
+    type: dockerOptions
+    versionTemplate:
+      memory: 64
+      cpuShares: 128
+      portMappings:
+        - 0:80
+      labels:
+        app: e2eshippabledemo
+        env: test
+
+# TEST env vars
+  - name: test_params_ecr_img
+    type: params
+    versionTemplate:
+      params:
+        ENVIRONMENT: "TEST"
+        PORT: 80
+
+## PROD Docker Image Options
+#  - name: e2eshipdemo-img-options-ecs-prod
+#    type: dockerOptions
+#    version:
+#      memory: 64
+#      cpuShares: 128
+#      portMappings:
+#        - 0:80
+#      labels:
+#        app: e2eshippabledemo
+#        env: prod
+#    flags:
+#      - e2eShippableDemo
+#
+## PROD env vars
+#  - name: e2eshipdemo-params-ecs-prod
+#    type: params
+#    version:
+#      params:
+#        ENVIRONMENT: "PROD"
+#        PORT: 80
+#    flags:
+#      - e2eShippableDemo
+
+jobs:
+#---------------------------------------------------------------#
+#----------------------------   Dev   --------------------------#
+#---------------------------------------------------------------#
+
+# runCI job that builds and pushes artifact using Shippable CI
+  - name: demo_app_runCI
+    type: runCI
+    steps:
+      - OUT: ecr_img_demo_app
+    flags:
+      - e2e_demo_app
+
+## Generate manifest
+#  - name: e2eshipdemo-manifest-ecs
+#    type: manifest
+#    steps:
+#      - IN: e2eshipdemo-img-ecs
+#      - IN: e2eshipdemo-img-options-ecs-test
+#      - TASK: managed
+#    flags:
+#      - e2eShippableDemo
+#
+## Create TEST Release
+#  - name: e2eshipdemo-release-ecs-beta
+#    type: release
+#    steps:
+#      - IN: e2eshipdemo-manifest-ecs
+#      - IN: e2eshipdemo-version-ecs
+#      - TASK: managed
+#        bump: beta
+#    flags:
+#      - e2eShippableDemo
+
+
+# Language setting http://docs.shippable.com/ci/languages/node/
+#
+language: node_js
+
+node_js:
+  - 5.3
+
+# use this to control what branches get built.
+# http://docs.shippable.com/ci/advancedOptions/branches/
+branches:
+  only:
+    - master
+
+# using pre-defined build variables
+# full list http://docs.shippable.com/ci/advancedOptions/environmentVariables/
+env:
+  global:
+    - TEST_RESULTS_DIR=$SHIPPABLE_REPO_DIR/shippable/testresults
+    - CODE_COVERAGE_DIR=$SHIPPABLE_REPO_DIR/shippable/codecoverage
+    - TESTS_LOC_DIR=$SHIPPABLE_REPO_DIR/tests
+    - RES_IMG="ecr_img_demo_app"
+    - MOD_LOC=$SHIPPABLE_REPO_DIR/node_modules/.bin/
+    - DOCKER_REPO="demo_app"
+    - DOCKER_ACC="679404489841.dkr.ecr.us-east-1.amazonaws.com" # replace with your ECR URL
+
+build:
+  ci:
+    # npm mirrors can sometimes be flaky, better to use shippable_retry
+    # http://docs.shippable.com/ci/advancedOptions/retry/
+    - shippable_retry npm install
+    - mkdir -p $TEST_RESULTS_DIR && mkdir -p $CODE_COVERAGE_DIR
+    - pushd $TESTS_LOC_DIR
+    - $MOD_LOC/mocha --recursive "$TESTS_LOC_DIR/*.spec.js" -R mocha-junit-reporter --reporter-options mochaFile=$TEST_RESULTS_DIR/testresults.xml
+    - $MOD_LOC/istanbul --include-all-sources cover -root "$SHIPPABLE_REPO_DIR/routes" $SHIPPABLE_REPO_DIR/node_modules/mocha/bin/_mocha -- -R spec-xunit-file --recursive "$TESTS_LOC_DIR/*.spec.js"
+    - $MOD_LOC/istanbul report cobertura --dir $CODE_COVERAGE_DIR
+    - echo true
+    - popd
+
+  post_ci:
+    - docker build -t $DOCKER_ACC/$DOCKER_REPO:$BRANCH.$BUILD_NUMBER .
+    - docker push $DOCKER_ACC/$DOCKER_REPO:$BRANCH.$BUILD_NUMBER
+
+  on_success:
+    # save the new image state for use later in the pipeline
+    # - echo versionName=$BRANCH.$BUILD_NUMBER > /build/state/e2eshipdemo-img-ecs.env
+    - shipctl put_resource_state $RES_IMG versionName $BRANCH.$BUILD_NUMBER
+
+# Integrations are used to connect external resources to CI
+# http://docs.shippable.com/integrations/overview/
+integrations:
+# adding docker hub integration so that credentials are available to CI Job
+# http://docs.shippable.com/integrations/imageRegistries/dockerHub/
+  hub:
+    - integrationName: demo_aws # replace with your Amazon AWS Integration name
+      region: us-east-1
+      type: ecr
+
+  # http://docs.shippable.com/ci/shippableyml/#notifications
+  notifications:
+    # turns off email for PR builds, notifies only on failure or change in status
+    # http://docs.shippable.com/integrations/notifications/email/
+    - integrationName: email
+      type: email
+      on_success: change
+      on_failure: always
+      on_pull_request: never
+
+    - integrationName: demo_slack
+      type: slack
+      on_success: change
+      on_failure: always
+      on_pull_request: never
+      recipients:
+        - "#demo" 
