@@ -5,13 +5,13 @@ resources:
 #---------------------------------------------------------------#
 
 # Set app version seed
-  - name: version_demo_app
+  - name: version_app
     type: version
     versionTemplate:
       versionName: "1.1.0"
 
 # Docker Image
-  - name: ecr_img_demo_app
+  - name: ecr_img_app
     type: image
     integration: demo_aws # replace with your Amazon ECR integration name
     versionTemplate:
@@ -20,7 +20,7 @@ resources:
       versionName: master.1
 
 # TEST Docker Image Options
-  - name: test_img_opts_ecr_img
+  - name: test_img_opts_app
     type: dockerOptions
     versionTemplate:
       memory: 64
@@ -28,11 +28,11 @@ resources:
       portMappings:
         - 0:80
       labels:
-        app: e2eshippabledemo
+        app: app
         env: test
 
 # TEST env vars
-  - name: test_params_ecr_img
+  - name: test_params_app
     type: params
     versionTemplate:
       params:
@@ -69,10 +69,10 @@ jobs:
 #---------------------------------------------------------------#
 
 # runCI job that builds and pushes artifact using Shippable CI
-  - name: demo_app_runCI
+  - name: app_runCI
     type: runCI
     steps:
-      - OUT: ecr_img_demo_app
+      - OUT: ecr_img_app
     flags:
       - e2e_demo_app
 
@@ -118,7 +118,7 @@ env:
     - TEST_RESULTS_DIR=$SHIPPABLE_REPO_DIR/shippable/testresults
     - CODE_COVERAGE_DIR=$SHIPPABLE_REPO_DIR/shippable/codecoverage
     - TESTS_LOC_DIR=$SHIPPABLE_REPO_DIR/tests
-    - RES_IMG="ecr_img_demo_app"
+    - RES_IMG="ecr_img_app"
     - MOD_LOC=$SHIPPABLE_REPO_DIR/node_modules/.bin/
     - DOCKER_REPO="demo_app"
     - DOCKER_ACC="679404489841.dkr.ecr.us-east-1.amazonaws.com" # replace with your ECR URL
@@ -142,7 +142,6 @@ build:
 
   on_success:
     # save the new image state for use later in the pipeline
-    # - echo versionName=$BRANCH.$BUILD_NUMBER > /build/state/e2eshipdemo-img-ecs.env
     - shipctl put_resource_state $RES_IMG versionName $BRANCH.$BUILD_NUMBER
 
 # Integrations are used to connect external resources to CI
