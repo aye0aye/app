@@ -31,6 +31,14 @@ resources:
         app: app
         env: test
 
+# DEV env vars
+  - name: dev_params_app
+    type: params
+    versionTemplate:
+      params:
+        ENVIRONMENT: "DEV"
+        PORT: 80
+
 ## TEST env vars
 #  - name: test_params_app
 #    type: params
@@ -71,6 +79,8 @@ jobs:
 # runCI job that builds and pushes artifact using Shippable CI
   - name: app_runCI
     type: runCI
+    dependencyMode: strict
+    triggerMode: parallel
     steps:
       - OUT: ecr_img_app
     flags:
@@ -79,9 +89,12 @@ jobs:
 # Generate manifest
   - name: manifest_app
     type: manifest
+    dependencyMode: strict
+    triggerMode: parallel
     steps:
       - IN: ecr_img_app
       - IN: dev_img_opts_app
+      - IN: dev_params_app
       - TASK: managed
     flags:
       - e2e_demo_app
