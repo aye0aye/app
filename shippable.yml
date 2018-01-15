@@ -4,11 +4,11 @@ resources:
 #------------------------------ Dev ----------------------------#
 #---------------------------------------------------------------#
 
-# Set app version seed
-  - name: version_app
-    type: version
-    versionTemplate:
-      versionName: "1.1.0"
+## Set app version seed
+#  - name: version_app
+#    type: version
+#    versionTemplate:
+#      versionName: "1.1.0"
 
 # Docker Image
   - name: ecr_img_app
@@ -39,13 +39,6 @@ resources:
         ENVIRONMENT: "DEV"
         PORT: 80
 
-## TEST env vars
-#  - name: test_params_app
-#    type: params
-#    versionTemplate:
-#      params:
-#        ENVIRONMENT: "TEST"
-#        PORT: 80
 
 ## PROD Docker Image Options
 #  - name: e2eshipdemo-img-options-ecs-prod
@@ -98,17 +91,6 @@ jobs:
       - TASK: managed
     flags:
       - e2e_demo_app
-
-## Create TEST Release
-#  - name: e2eshipdemo-release-ecs-beta
-#    type: release
-#    steps:
-#      - IN: e2eshipdemo-manifest-ecs
-#      - IN: e2eshipdemo-version-ecs
-#      - TASK: managed
-#        bump: beta
-#    flags:
-#      - e2eShippableDemo
 
 
 # Language setting http://docs.shippable.com/ci/languages/node/
