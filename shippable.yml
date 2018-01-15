@@ -20,7 +20,7 @@ resources:
       versionName: master.1
 
 # TEST Docker Image Options
-  - name: test_img_opts_app
+  - name: dev_img_opts_app
     type: dockerOptions
     versionTemplate:
       memory: 64
@@ -31,13 +31,13 @@ resources:
         app: app
         env: test
 
-# TEST env vars
-  - name: test_params_app
-    type: params
-    versionTemplate:
-      params:
-        ENVIRONMENT: "TEST"
-        PORT: 80
+## TEST env vars
+#  - name: test_params_app
+#    type: params
+#    versionTemplate:
+#      params:
+#        ENVIRONMENT: "TEST"
+#        PORT: 80
 
 ## PROD Docker Image Options
 #  - name: e2eshipdemo-img-options-ecs-prod
@@ -76,16 +76,16 @@ jobs:
     flags:
       - e2e_demo_app
 
-## Generate manifest
-#  - name: e2eshipdemo-manifest-ecs
-#    type: manifest
-#    steps:
-#      - IN: e2eshipdemo-img-ecs
-#      - IN: e2eshipdemo-img-options-ecs-test
-#      - TASK: managed
-#    flags:
-#      - e2eShippableDemo
-#
+# Generate manifest
+  - name: manifest_app
+    type: manifest
+    steps:
+      - IN: ecr_img_app
+      - IN: dev_img_opts_app
+      - TASK: managed
+    flags:
+      - e2e_demo_app
+
 ## Create TEST Release
 #  - name: e2eshipdemo-release-ecs-beta
 #    type: release
