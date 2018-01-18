@@ -11,7 +11,7 @@ resources:
     versionTemplate:
       sourceName: "679404489841.dkr.ecr.us-east-1.amazonaws.com/app" # replace with your Amazon ECR URL
       isPull: false
-      versionName: master.1
+      versionName: latest
 
 # TEST Docker Image Options
   - name: dev_img_opts_app
