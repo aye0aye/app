@@ -4,18 +4,12 @@ resources:
 #------------------------------ Dev ----------------------------#
 #---------------------------------------------------------------#
 
-## Set app version seed
-#  - name: version_app
-#    type: version
-#    versionTemplate:
-#      versionName: "1.1.0"
-
 # Docker Image
   - name: ecr_img_app
     type: image
     integration: demo_aws # replace with your Amazon ECR integration name
     versionTemplate:
-      sourceName: "679404489841.dkr.ecr.us-east-1.amazonaws.com/e2eshippabledemo" # replace with your Amazon ECR URL
+      sourceName: "679404489841.dkr.ecr.us-east-1.amazonaws.com/app" # replace with your Amazon ECR URL
       isPull: false
       versionName: master.1
 
